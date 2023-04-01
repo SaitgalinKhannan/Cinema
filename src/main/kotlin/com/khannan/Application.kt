@@ -1,9 +1,7 @@
 package com.khannan
 
-import com.khannan.plugins.configureDatabases
-import com.khannan.plugins.configureRouting
-import com.khannan.plugins.configureSerialization
-import com.khannan.plugins.sendFilm
+import com.khannan.plugins.*
+import com.khannan.plugins.configureFilmSending
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -21,5 +19,6 @@ fun Application.module() {
     configureSerialization()
     configureDatabases()
     configureRouting()
-    sendFilm()
+    configureSSE()
+    configureFilmSending()
 }
