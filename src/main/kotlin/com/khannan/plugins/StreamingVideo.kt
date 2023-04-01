@@ -1,7 +1,7 @@
-package com.khannan.io
+package com.khannan.plugins
 
-import com.khannan.plugins.MovieService
-import com.khannan.plugins.connectToPostgres
+import com.khannan.service.MovieService
+import com.khannan.service.connectToPostgres
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -19,7 +19,7 @@ fun Application.sendFilm() {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             try {
                 val movie = movieService.read(id)
-                val file = File(movie.movPath)
+                val file = File(movie.filePath)
                 call.response.header(
                     HttpHeaders.ContentDisposition,
                     ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name)

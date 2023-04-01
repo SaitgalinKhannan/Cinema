@@ -1,86 +1,13 @@
-package com.khannan.plugins
+package com.khannan.service
 
-import com.khannan.entity.Movie
-import io.ktor.http.*
+import com.khannan.model.Movie
 import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import kotlinx.coroutines.*
-import java.sql.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.Statement
 
-fun Application.configureDatabases() {
-
-    val dbConnection: Connection = connectToPostgres(embedded = true)
-    val movieService = MovieService(dbConnection)
-
-    routing {
-        // Create movie
-        post("/movie") {
-            val movie = call.receive<Movie>()
-            val id = movieService.create(movie)
-            call.respond(HttpStatusCode.Created, id)
-        }
-
-        // Read movie
-        get("/movie/{id}") {
-            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            try {
-                val movie = movieService.read(id)
-                call.respond(HttpStatusCode.OK, movie)
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.NotFound)
-            }
-        }
-
-        // Read all movies
-        get("/movie/all") {
-            try {
-                val movies = movieService.readAll()
-                call.respond(HttpStatusCode.OK, movies)
-            } catch (e: Exception) {
-                call.respond(HttpStatusCode.NotFound)
-            }
-        }
-
-        // Update movie
-        put("/movie/{id}") {
-            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            val movie = call.receive<Movie>()
-            movieService.update(id, movie)
-            call.respond(HttpStatusCode.OK)
-        }
-
-        // Delete movie
-        delete("/movie/{id}") {
-            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            movieService.delete(id)
-            call.respond(HttpStatusCode.OK)
-        }
-    }
-}
-
-/**
- * Makes a connection to a Postgres database.
- *
- * In order to connect to your running Postgres process,
- * please specify the following parameters in your configuration file:
- * - postgres.url -- Url of your running database process.
- * - postgres.user -- Username for database connection
- * - postgres.password -- Password for database connection
- *
- * If you don't have a database process running yet, you may need to [download]((https://www.postgresql.org/download/))
- * and install Postgres and follow the instructions [here](https://postgresapp.com/).
- * Then, you would be edit your url,  which is usually "jdbc:postgresql://host:port/database", as well as
- * user and password values.
- *
- *
- * @param embedded -- if [true] defaults to an embedded database for tests that runs locally in the same process.
- * In this case you don't have to provide any parameters in configuration file, and you don't have to run a process.
- *
- * @return [Connection] that represent connection to the database. Please, don't forget to close this connection when
- * your application shuts down by calling [Connection.close]
- * */
 fun Application.connectToPostgres(embedded: Boolean): Connection {
     Class.forName("org.postgresql.Driver")
 
@@ -97,6 +24,24 @@ fun Application.connectToPostgres(embedded: Boolean): Connection {
 
 class MovieService(private val connection: Connection) {
     companion object {
+        private const val CREATE_TABLE_MOVIES =
+            "CREATE TABLE IF NOT EXISTS Movie (movId INTEGER PRIMARY KEY,  movTitle VARCHAR(255) NOT NULL,  movYear INTEGER NOT NULL,  movTime INTEGER NOT NULL,  movLang VARCHAR(255) NOT NULL,  movRelCountry VARCHAR(255) NOT NULL,  movPath VARCHAR(255) NOT NULL,  movPreviewPath VARCHAR(255) NOT NULL)"
+        private const val CREATE_TABLE_ACTOR =
+            "CREATE TABLE IF NOT EXISTS Actor (actId INTEGER PRIMARY KEY, actFname VARCHAR(255) NOT NULL, catLname VARCHAR(255) NOT NULL, actGender VARCHAR(10) NOT NULL)"
+        private const val CREATE_TABLE_DIRECTOR =
+            "CREATE TABLE IF NOT EXISTS Director (dirId INTEGER PRIMARY KEY, dirFname VARCHAR(255) NOT NULL, dirLname VARCHAR(255) NOT NULL)"
+        private const val CREATE_TABLE_GENRE =
+            "CREATE TABLE IF NOT EXISTS Genre (genId INTEGER PRIMARY KEY, genTitle VARCHAR(255) NOT NULL)"
+        private const val CREATE_TABLE_MOVIE_CAST =
+            "CREATE TABLE MovieCast (actId INTEGER NOT NULL, movId INTEGER NOT NULL, role VARCHAR(255) NOT NULL, PRIMARY KEY (actId, movId), FOREIGN KEY (actId) REFERENCES Actor(actId), FOREIGN KEY (movId) REFERENCES Movie(movId))"
+        private const val CREATE_TABLE_MOVIE_DIRECTION =
+            "CREATE TABLE MovieDirection (dirId INTEGER NOT NULL, movId INTEGER NOT NULL, PRIMARY KEY (dirId, movId), FOREIGN KEY (dirId) REFERENCES Director(dirId), FOREIGN KEY (movId) REFERENCES Movie(movId))"
+        private const val CREATE_TABLE_MOVIE_GENRE =
+            "CREATE TABLE MovieGenre (movId INTEGER NOT NULL, genId INTEGER NOT NULL, PRIMARY KEY (movId, genId), FOREIGN KEY (movId) REFERENCES Movie(movId), FOREIGN KEY (genId) REFERENCES Genre(genId))"
+        private const val CREATE_TABLE_RATING =
+            "CREATE TABLE Rating (movId INTEGER NOT NULL, revId INTEGER NOT NULL, revStars INTEGER NOT NULL, numORatings INTEGER NOT NULL, PRIMARY KEY (movId, revId), FOREIGN KEY (movId) REFERENCES Movie(movId), FOREIGN KEY (revId) REFERENCES Reviewer(revId))"
+        private const val CREATE_TABLE_REVIEWER =
+            "CREATE TABLE Reviewer (revId INTEGER PRIMARY KEY, revName VARCHAR(255) NOT NULL)"
         private const val SELECT_MOVIE_BY_ID =
             "SELECT mov_title, mov_year, mov_time, mov_lang, mov_rel_country, mov_path, mov_preview_path FROM movie WHERE mov_id = ?"
         private const val SELECT_ALL_MOVIES =
@@ -109,25 +54,33 @@ class MovieService(private val connection: Connection) {
 
     }
 
-    /*init {
+    init {
         val statement = connection.createStatement()
         try {
             statement.executeUpdate(CREATE_TABLE_MOVIES)
+            statement.executeUpdate(CREATE_TABLE_ACTOR)
+            statement.executeUpdate(CREATE_TABLE_DIRECTOR)
+            statement.executeUpdate(CREATE_TABLE_GENRE)
+            statement.executeUpdate(CREATE_TABLE_MOVIE_CAST)
+            statement.executeUpdate(CREATE_TABLE_MOVIE_DIRECTION)
+            statement.executeUpdate(CREATE_TABLE_MOVIE_GENRE)
+            statement.executeUpdate(CREATE_TABLE_RATING)
+            statement.executeUpdate(CREATE_TABLE_REVIEWER)
         } catch(e: Exception) {
             println(e.message)
         }
-    }*/
+    }
 
     // Create new movie
     suspend fun create(movie: Movie): Int = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(INSERT_MOVIE, Statement.RETURN_GENERATED_KEYS)
-        statement.setString(1, movie.movTitle)
-        statement.setInt(2, movie.movYear)
-        statement.setInt(3, movie.movTime)
-        statement.setString(4, movie.movLang)
-        statement.setString(5, movie.movRelCountry)
-        statement.setString(6, movie.movPath)
-        statement.setString(7, movie.movPreviewPath)
+        statement.setString(1, movie.title)
+        statement.setInt(2, movie.releaseYear)
+        statement.setInt(3, movie.runtimeMinutes)
+        statement.setString(4, movie.language)
+        statement.setString(5, movie.releaseCountry)
+        statement.setString(6, movie.filePath)
+        statement.setString(7, movie.previewFilePath)
         statement.executeUpdate()
 
         val generatedKeys = statement.generatedKeys
@@ -206,13 +159,13 @@ class MovieService(private val connection: Connection) {
     // Update a movie
     suspend fun update(id: Int, movie: Movie) = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(UPDATE_MOVIE)
-        statement.setString(1, movie.movTitle)
-        statement.setInt(2, movie.movYear)
-        statement.setInt(3, movie.movTime)
-        statement.setString(4, movie.movLang)
-        statement.setString(5, movie.movRelCountry)
-        statement.setString(6, movie.movLang)
-        statement.setString(7, movie.movPreviewPath)
+        statement.setString(1, movie.title)
+        statement.setInt(2, movie.releaseYear)
+        statement.setInt(3, movie.runtimeMinutes)
+        statement.setString(4, movie.language)
+        statement.setString(5, movie.releaseCountry)
+        statement.setString(6, movie.language)
+        statement.setString(7, movie.previewFilePath)
         statement.setInt(8, id)
         statement.executeUpdate()
     }

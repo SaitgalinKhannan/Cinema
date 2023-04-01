@@ -1,10 +1,12 @@
 package com.khannan
 
-import com.khannan.io.sendFilm
+import com.khannan.plugins.configureDatabases
+import com.khannan.plugins.configureRouting
+import com.khannan.plugins.configureSerialization
+import com.khannan.plugins.sendFilm
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import com.khannan.plugins.*
 import io.ktor.server.plugins.autohead.*
 import io.ktor.server.plugins.partialcontent.*
 
