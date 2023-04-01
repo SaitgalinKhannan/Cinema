@@ -1,6 +1,8 @@
 package com.khannan.plugins
 
+import com.khannan.model.FullMovie
 import com.khannan.model.Movie
+import com.khannan.model.MovieFile
 import com.khannan.service.MovieService
 import com.khannan.service.connectToPostgres
 import io.ktor.http.*
@@ -18,8 +20,8 @@ fun Application.configureDatabases() {
     routing {
         // Create movie
         post("/movie") {
-            val movie = call.receive<Movie>()
-            val id = movieService.create(movie)
+            val fullMovie = call.receive<FullMovie>()
+            val id = movieService.create(fullMovie.movie, fullMovie.movieFile)
             call.respond(HttpStatusCode.Created, id)
         }
 
@@ -27,8 +29,10 @@ fun Application.configureDatabases() {
         get("/movie/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             try {
-                val movie = movieService.read(id)
-                call.respond(HttpStatusCode.OK, movie)
+                val movie = movieService.readMovie(id)
+                val movieFile = movieService.readMovieFile(id)
+                val fullMovie = FullMovie(movie, movieFile)
+                call.respond(HttpStatusCode.OK, fullMovie)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
             }
@@ -37,8 +41,13 @@ fun Application.configureDatabases() {
         // Read all movies
         get("/movie/all") {
             try {
-                val movies = movieService.readAll()
-                call.respond(HttpStatusCode.OK, movies)
+                val movies = movieService.readAllMovie()
+                val moviesFiles = movieService.readAllMovieFile()
+                val fullMovie = mutableListOf<FullMovie>()
+                movies.zip(moviesFiles).forEach {
+                    fullMovie.add(FullMovie(it.first, it.second))
+                }
+                call.respond(HttpStatusCode.OK, fullMovie)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
             }
@@ -47,8 +56,8 @@ fun Application.configureDatabases() {
         // Update movie
         put("/movie/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
-            val movie = call.receive<Movie>()
-            movieService.update(id, movie)
+            val fullMovie = call.receive<FullMovie>()
+            movieService.update(id, fullMovie.movie, fullMovie.movieFile)
             call.respond(HttpStatusCode.OK)
         }
 

@@ -18,13 +18,24 @@ fun Application.configureFilmSending() {
         get("/movie/watch/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             try {
-                val movie = movieService.read(id)
-                val file = File(movie.filePath)
+                val movieFile = movieService.readMovieFile(id)
+                val file = File(movieFile.filePath)
                 call.response.header(
                     HttpHeaders.ContentDisposition,
                     ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name)
                         .toString()
                 )
+                call.respondFile(file)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
+        get("/movie/preview/{id}") {
+            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+            try {
+                val movieFile = movieService.readMovieFile(id)
+                val file = File(movieFile.previewFilePath)
                 call.respondFile(file)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
