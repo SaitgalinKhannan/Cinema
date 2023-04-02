@@ -36,7 +36,15 @@ fun Application.configureFilmSending() {
             try {
                 val movieFile = movieService.readMovieFile(id)
                 val file = File(movieFile.previewFilePath)
+                call.response.header(
+                    HttpHeaders.ContentDisposition,
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, file.name)
+                        .toString()
+                )
                 call.respondFile(file)
+                /*call.respondOutputStream {
+                    file.inputStream().copyTo(this)
+                }*/
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
             }

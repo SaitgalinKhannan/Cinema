@@ -1,8 +1,6 @@
 package com.khannan.plugins
 
 import com.khannan.model.FullMovie
-import com.khannan.model.Movie
-import com.khannan.model.MovieFile
 import com.khannan.service.MovieService
 import com.khannan.service.connectToPostgres
 import io.ktor.http.*
@@ -30,9 +28,7 @@ fun Application.configureDatabases() {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             try {
                 val movie = movieService.readMovie(id)
-                val movieFile = movieService.readMovieFile(id)
-                val fullMovie = FullMovie(movie, movieFile)
-                call.respond(HttpStatusCode.OK, fullMovie)
+                call.respond(HttpStatusCode.OK, movie)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
             }
@@ -42,12 +38,7 @@ fun Application.configureDatabases() {
         get("/movie/all") {
             try {
                 val movies = movieService.readAllMovie()
-                val moviesFiles = movieService.readAllMovieFile()
-                val fullMovie = mutableListOf<FullMovie>()
-                movies.zip(moviesFiles).forEach {
-                    fullMovie.add(FullMovie(it.first, it.second))
-                }
-                call.respond(HttpStatusCode.OK, fullMovie)
+                call.respond(HttpStatusCode.OK, movies)
             } catch (e: Exception) {
                 call.respond(HttpStatusCode.NotFound)
             }

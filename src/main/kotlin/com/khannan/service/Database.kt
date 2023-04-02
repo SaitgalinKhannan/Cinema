@@ -186,6 +186,7 @@ class MovieService(private val connection: Connection) {
         }
     }
 
+    @Suppress("Unused")
     suspend fun readAllMovieFile(): List<MovieFile> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_ALL_MOVIEFILE)
         val resultSet = statement.executeQuery()

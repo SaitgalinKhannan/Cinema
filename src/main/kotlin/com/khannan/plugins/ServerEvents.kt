@@ -66,7 +66,7 @@ fun Application.configureSSE() {
         }
         /**
          * Route to be executed when the client perform a GET `/` request.
-         * It will serve a HTML file embedded directly in this string that
+         * It will serve instead HTML file embedded directly in this string that
          * contains JavaScript code to connect to the `/sse` endpoint using
          * the EventSource JavaScript class ( https://html.spec.whatwg.org/multipage/comms.html#the-eventsource-interface ).
          * Normally you would serve HTML and JS files using the [static] method.
