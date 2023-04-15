@@ -1,4 +1,4 @@
-package com.khannan.service
+package com.khannan.repository
 
 import com.khannan.model.Movie
 import com.khannan.model.MovieFile
@@ -23,7 +23,7 @@ fun Application.connectToPostgres(embedded: Boolean): Connection {
     }
 }
 
-class MovieService(private val connection: Connection) {
+class MovieRepository(private val connection: Connection) {
     companion object {
         private const val CREATE_TABLE_MOVIES =
             "CREATE TABLE IF NOT EXISTS Movie (movId INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY, movTitle VARCHAR(255) NOT NULL, movYear INTEGER NOT NULL, movTime INTEGER NOT NULL, movLang VARCHAR(255) NOT NULL, movRelCountry VARCHAR(255) NOT NULL)"
@@ -60,7 +60,7 @@ class MovieService(private val connection: Connection) {
         private const val UPDATE_MOVIE =
             "UPDATE movie SET movtitle = ?, movyear = ?, movtime = ?, movlang = ?, movrelcountry = ? WHERE movid = ?"
         private const val UPDATE_MOVIEFILE =
-            "UPDATE movie SET movpath = ?, movpreviewpath = ? WHERE movid = ?"
+            "UPDATE moviefile SET movpath = ?, movpreviewpath = ? WHERE movid = ?"
         private const val DELETE_MOVIE = "DELETE FROM movie WHERE movid = ?"
 
     }
@@ -109,7 +109,7 @@ class MovieService(private val connection: Connection) {
     }
 
     // Read a movie
-    suspend fun readMovie(id: Int): Movie = withContext(Dispatchers.IO) {
+    suspend fun movie(id: Int): Movie = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_MOVIE_BY_ID)
         statement.setInt(1, id)
         val resultSet = statement.executeQuery()
@@ -134,7 +134,7 @@ class MovieService(private val connection: Connection) {
         }
     }
 
-    suspend fun readMovieFile(id: Int): MovieFile = withContext(Dispatchers.IO) {
+    suspend fun movieFile(id: Int): MovieFile = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_MOVIEFILE_BY_ID)
         statement.setInt(1, id)
         val resultSet = statement.executeQuery()
@@ -154,7 +154,7 @@ class MovieService(private val connection: Connection) {
     }
 
     // Read all movies
-    suspend fun readAllMovie(): List<Movie> = withContext(Dispatchers.IO) {
+    suspend fun allMovies(): List<Movie> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_ALL_MOVIES)
         val resultSet = statement.executeQuery()
         val moviesList = mutableListOf<Movie>()
@@ -187,7 +187,7 @@ class MovieService(private val connection: Connection) {
     }
 
     @Suppress("Unused")
-    suspend fun readAllMovieFile(): List<MovieFile> = withContext(Dispatchers.IO) {
+    suspend fun allMoviesFiles(): List<MovieFile> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_ALL_MOVIEFILE)
         val resultSet = statement.executeQuery()
         val moviesList = mutableListOf<MovieFile>()

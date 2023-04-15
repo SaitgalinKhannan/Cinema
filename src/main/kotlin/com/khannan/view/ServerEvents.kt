@@ -1,4 +1,4 @@
-package com.khannan.plugins
+package com.khannan.view
 
 import com.khannan.model.SseEvent
 import io.ktor.http.*
