@@ -31,6 +31,7 @@ suspend fun ApplicationCall.respondSse(events: ReceiveChannel<SseEvent>) {
     }
 }
 
+@Suppress("Unused")
 @OptIn(ExperimentalCoroutinesApi::class, ObsoleteCoroutinesApi::class)
 fun Application.configureSSE() {
     /**

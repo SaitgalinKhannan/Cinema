@@ -10,7 +10,7 @@ import io.ktor.server.routing.*
 import java.io.File
 import java.sql.Connection
 
-fun Application.configureFilmSending() {
+fun Application.filmSending() {
 
     val dbConnection: Connection = connectToPostgres(embedded = true)
     val movieController = MovieController(MovieRepository(dbConnection))

@@ -3,7 +3,6 @@ package com.khannan.model
 import kotlinx.serialization.Serializable
 
 
-@Suppress("Unused")
 @Serializable
 data class Actor(
     val id: Int,
@@ -12,7 +11,6 @@ data class Actor(
     val gender: String
 )
 
-@Suppress("Unused")
 @Serializable
 data class Director(
     val id: Int,
@@ -20,14 +18,12 @@ data class Director(
     val lastName: String
 )
 
-@Suppress("Unused")
 @Serializable
 data class Genre(
     val id: Int,
     val title: String
 )
 
-@Suppress("Unused")
 @Serializable
 data class FullMovie(
     val movie: Movie,
@@ -52,7 +48,6 @@ data class MovieFile(
     val previewFilePath: String
 )
 
-@Suppress("Unused")
 @Serializable
 data class MovieCast(
     val actorId: Int,
@@ -60,21 +55,18 @@ data class MovieCast(
     val role: String
 )
 
-@Suppress("Unused")
 @Serializable
 data class MovieDirection(
     val directorId: Int,
     val movieId: Int
 )
 
-@Suppress("Unused")
 @Serializable
 data class MovieGenre(
     val movieId: Int,
     val genreId: Int
 )
 
-@Suppress("Unused")
 @Serializable
 data class Rating(
     val movieId: Int,
@@ -83,16 +75,31 @@ data class Rating(
     val numberOfRatings: Int
 )
 
-@Suppress("Unused")
 @Serializable
 data class Reviewer(
     val id: Int,
     val name: String
 )
 
-@Suppress("Unused")
+@Serializable
 data class SseEvent(
     val data: String,
     val event: String? = null,
     val id: String? = null
+)
+
+@Serializable
+data class CinemaUser(
+    val id: Int,
+    val lastName: String,
+    val firstName: String,
+    val middleName: String?,
+    val email: String,
+    val password: String
+)
+
+@Serializable
+data class EmailPass(
+    val email: String,
+    val password: String
 )

@@ -7,6 +7,7 @@ import kotlin.test.*
 import io.ktor.http.*
 import com.khannan.plugins.*
 import io.ktor.client.call.body
+import io.ktor.client.call.body
 
 class ApplicationTest {
     @Test
