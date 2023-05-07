@@ -1,7 +1,6 @@
 package com.khannan.repository
 
-import com.khannan.model.Movie
-import com.khannan.model.MovieFile
+import com.khannan.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.sql.Connection
@@ -25,18 +24,36 @@ class MovieRepository(private val connection: Connection) {
             "CREATE TABLE IF NOT EXISTS MovieGenre (movId INTEGER NOT NULL, genId INTEGER NOT NULL, PRIMARY KEY (movId, genId), FOREIGN KEY (movId) REFERENCES Movie(movId), FOREIGN KEY (genId) REFERENCES Genre(genId))"
         private const val CREATE_TABLE_REVIEWER =
             "CREATE TABLE IF NOT EXISTS Reviewer (revId INTEGER PRIMARY KEY, revName VARCHAR(255) NOT NULL)"
-        private const val CREATE_TABLE_RATING =
-            "CREATE TABLE IF NOT EXISTS Rating (movId INTEGER NOT NULL, revId INTEGER NOT NULL, revStars INTEGER NOT NULL, numORatings INTEGER NOT NULL, PRIMARY KEY (movId, revId), FOREIGN KEY (movId) REFERENCES Movie(movId), FOREIGN KEY (revId) REFERENCES Reviewer(revId))"
+        private const val CREATE_TABLE_REVIEW =
+            "CREATE TABLE IF NOT EXISTS Review (movId INTEGER NOT NULL, revId INTEGER NOT NULL, revStars INTEGER NOT NULL, PRIMARY KEY (movId, revId), FOREIGN KEY (movId) REFERENCES Movie(movId), FOREIGN KEY (revId) REFERENCES Reviewer(revId))"
         private const val CREATE_TABLE_MOVIEFILE =
             "CREATE TABLE IF NOT EXISTS MovieFile (movId INTEGER NOT NULL, movPath VARCHAR(255) NOT NULL, movPreviewPath VARCHAR(255) NOT NULL, CONSTRAINT id_unique UNIQUE (movId), FOREIGN KEY (movId) REFERENCES Movie (movId))"
         private const val SELECT_MOVIE_BY_ID =
             "SELECT movtitle, movyear, movtime, movlang, movrelcountry FROM movie WHERE movid = ?"
-        private const val SELECT_MOVIEFILE_BY_ID =
+        private const val SELECT_MOVIE_FILE_BY_ID =
             "SELECT movpath, movpreviewpath FROM moviefile WHERE movid = ?"
-        private const val SELECT_ALL_MOVIEFILE =
+        private const val SELECT_ALL_MOVIE_FILE =
             "SELECT movid, movpath, movpreviewpath FROM moviefile ORDER BY movid"
         private const val SELECT_ALL_MOVIES =
             "SELECT movid, movtitle, movyear, movtime, movlang, movrelcountry FROM movie ORDER BY movid"
+        private const val SELECT_MOVIE_GENRE_BY_ID =
+            "SELECT genre.genid, genre.gentitle FROM moviegenre " +
+                    "JOIN genre ON moviegenre.genid = genre.genid " +
+                    "WHERE moviegenre.movid = ?"
+        private const val SELECT_MOVIE_CAST_BY_ID =
+            "SELECT actor.actid, actor.actfirstname, actor.actlastname, actor.actgender " +
+                    "FROM moviecast " +
+                    "JOIN actor ON moviecast.actid = actor.actid " +
+                    "WHERE moviecast.movid = ?"
+        private const val SELECT_MOVIE_DIRECTORS_BY_ID =
+            "SELECT director.dirid, director.dirfirstname, director.dirlastname " +
+                    "FROM moviedirection " +
+                    "JOIN director ON moviedirection.dirid = director.dirid " +
+                    "WHERE moviedirection.movid = ?"
+        private const val SELECT_MOVIE_REVIEWS_BY_ID =
+            "SELECT rv.revid, r.revname, rv.revstars FROM reviewer r JOIN review rv ON r.revid = rv.revid WHERE rv.movid = ?"
+        private const val SELECT_MOVIE_RATING_BY_ID =
+            "SELECT AVG(revstars) AS rating FROM review WHERE movid = ?"
         private const val INSERT_MOVIE =
             "INSERT INTO movie (movtitle, movyear, movtime, movlang, movrelcountry) VALUES (?, ?, ?, ?, ?)"
         private const val INSERT_MOVIEFILE =
@@ -45,6 +62,7 @@ class MovieRepository(private val connection: Connection) {
             "UPDATE movie SET movtitle = ?, movyear = ?, movtime = ?, movlang = ?, movrelcountry = ? WHERE movid = ?"
         private const val UPDATE_MOVIEFILE =
             "UPDATE moviefile SET movpath = ?, movpreviewpath = ? WHERE movid = ?"
+        private const val DELETE_MOVIEFILE = "DELETE FROM moviefile WHERE movid = ?"
         private const val DELETE_MOVIE = "DELETE FROM movie WHERE movid = ?"
     }
 
@@ -59,14 +77,134 @@ class MovieRepository(private val connection: Connection) {
             statement.executeUpdate(CREATE_TABLE_MOVIE_DIRECTION)
             statement.executeUpdate(CREATE_TABLE_MOVIE_GENRE)
             statement.executeUpdate(CREATE_TABLE_REVIEWER)
-            statement.executeUpdate(CREATE_TABLE_RATING)
+            statement.executeUpdate(CREATE_TABLE_REVIEW)
             statement.executeUpdate(CREATE_TABLE_MOVIEFILE)
         } catch (e: Exception) {
             println(e.message)
         }
     }
 
-    // Create new movie
+    suspend fun movieFullInfo(id: Int): MovieFullInfo = withContext(Dispatchers.IO) {
+        try {
+            val movie = movie(id)
+            val movieFile = movieFile(id)
+            val movieGenre = movieGenre(id)
+            val movieCast = movieCast(id)
+            val movieDirectors = movieDirectors(id)
+            val movieReviews = movieReviews(id)
+            val movieRating: Int = movieRating(id)
+
+            return@withContext MovieFullInfo(
+                movie,
+                movieFile,
+                movieGenre,
+                movieCast,
+                movieDirectors,
+                movieReviews,
+                movieRating
+            )
+        } catch (e: Exception) {
+            println(e.message)
+            throw Exception("Record not found")
+        }
+    }
+
+    private suspend fun movieRating(id: Int): Int = withContext(Dispatchers.IO) {
+        val movieRatingStatement = connection.prepareStatement(SELECT_MOVIE_RATING_BY_ID)
+        movieRatingStatement.setInt(1, id)
+        val movieRatingResultSet = movieRatingStatement.executeQuery()
+
+        if (movieRatingResultSet.next()) {
+            return@withContext movieRatingResultSet.getInt("rating")
+        } else {
+            return@withContext 0
+        }
+    }
+
+    private suspend fun movieReviews(id: Int): List<Review> = withContext(Dispatchers.IO) {
+        val movieReviewsStatement = connection.prepareStatement(SELECT_MOVIE_REVIEWS_BY_ID)
+        movieReviewsStatement.setInt(1, id)
+        val movieReviewsResultSet = movieReviewsStatement.executeQuery()
+        val movieReviews: MutableList<Review> = mutableListOf()
+
+        while (movieReviewsResultSet.next()) {
+            val reviewId = movieReviewsResultSet.getInt("revid")
+            val reviewerName = movieReviewsResultSet.getString("revname")
+            val reviewStars = movieReviewsResultSet.getInt("revstars")
+            val review = Review(reviewId, reviewerName, reviewStars)
+            movieReviews.add(review)
+        }
+
+        if (movieReviews.isNotEmpty()) {
+            return@withContext movieReviews
+        } else {
+            throw Exception("Record not found")
+        }
+    }
+
+    private suspend fun movieDirectors(id: Int): List<Director> = withContext(Dispatchers.IO) {
+        val movieDirectorsStatement = connection.prepareStatement(SELECT_MOVIE_DIRECTORS_BY_ID)
+        movieDirectorsStatement.setInt(1, id)
+        val movieDirectorsResultSet = movieDirectorsStatement.executeQuery()
+        val movieDirectors: MutableList<Director> = mutableListOf()
+
+        while (movieDirectorsResultSet.next()) {
+            val directorId = movieDirectorsResultSet.getInt("dirid")
+            val firstName = movieDirectorsResultSet.getString("dirfirstname")
+            val lastName = movieDirectorsResultSet.getString("dirlastname")
+            val director = Director(directorId, firstName, lastName)
+            movieDirectors.add(director)
+        }
+
+        if (movieDirectors.isNotEmpty()) {
+            return@withContext movieDirectors
+        } else {
+            throw Exception("Record not found")
+        }
+    }
+
+    private suspend fun movieCast(id: Int): List<Actor> = withContext(Dispatchers.IO) {
+        val movieCastStatement = connection.prepareStatement(SELECT_MOVIE_CAST_BY_ID)
+        movieCastStatement.setInt(1, id)
+        val movieCastResultSet = movieCastStatement.executeQuery()
+
+        if (movieCastResultSet.next()) {
+            val movieCast = mutableListOf<Actor>()
+            while (movieCastResultSet.next()) {
+                val actorId = movieCastResultSet.getInt("actid")
+                val firstName = movieCastResultSet.getString("actfirstname")
+                val lastName = movieCastResultSet.getString("actlastname")
+                val gender = movieCastResultSet.getString("actgender")
+                val actor = Actor(actorId, firstName, lastName, gender)
+                movieCast.add(actor)
+            }
+
+            return@withContext movieCast
+        } else {
+            throw Exception("Record not found")
+        }
+    }
+
+    private suspend fun movieGenre(id: Int): List<Genre> = withContext(Dispatchers.IO) {
+        val movieGenreStatement = connection.prepareStatement(SELECT_MOVIE_GENRE_BY_ID)
+        movieGenreStatement.setInt(1, id)
+        val movieGenreResultSet = movieGenreStatement.executeQuery()
+        val movieGenres = mutableListOf<Genre>()
+
+        while (movieGenreResultSet.next()) {
+            val genreId = movieGenreResultSet.getInt("genid")
+            val genreTitle = movieGenreResultSet.getString("gentitle")
+            val genre = Genre(genreId, genreTitle)
+            movieGenres.add(genre)
+        }
+
+        if (movieGenres.isNotEmpty()) {
+            return@withContext movieGenres
+        } else {
+            throw Exception("Record not found")
+        }
+    }
+
     suspend fun create(movie: Movie, movieFile: MovieFile): Int = withContext(Dispatchers.IO) {
         val statementMovie = connection.prepareStatement(INSERT_MOVIE, Statement.RETURN_GENERATED_KEYS)
         statementMovie.setString(1, movie.title)
@@ -91,7 +229,6 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    // Read a movie
     suspend fun movie(id: Int): Movie = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_MOVIE_BY_ID)
         statement.setInt(1, id)
@@ -117,8 +254,14 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
+    suspend fun deleteMovieFile(id: Int): Int = withContext(Dispatchers.IO) {
+        val statement = connection.prepareStatement(DELETE_MOVIEFILE)
+        statement.setInt(1, id)
+        statement.executeUpdate()
+    }
+
     suspend fun movieFile(id: Int): MovieFile = withContext(Dispatchers.IO) {
-        val statement = connection.prepareStatement(SELECT_MOVIEFILE_BY_ID)
+        val statement = connection.prepareStatement(SELECT_MOVIE_FILE_BY_ID)
         statement.setInt(1, id)
         val resultSet = statement.executeQuery()
 
@@ -136,7 +279,6 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    // Read all movies
     suspend fun allMovies(): List<Movie> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_ALL_MOVIES)
         val resultSet = statement.executeQuery()
@@ -171,7 +313,7 @@ class MovieRepository(private val connection: Connection) {
 
     @Suppress("Unused")
     suspend fun allMoviesFiles(): List<MovieFile> = withContext(Dispatchers.IO) {
-        val statement = connection.prepareStatement(SELECT_ALL_MOVIEFILE)
+        val statement = connection.prepareStatement(SELECT_ALL_MOVIE_FILE)
         val resultSet = statement.executeQuery()
         val moviesList = mutableListOf<MovieFile>()
 
@@ -196,8 +338,7 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    // Update a movie
-    suspend fun update(id: Int, movie: Movie, movieFile: MovieFile) = withContext(Dispatchers.IO) {
+    suspend fun updateMovie(id: Int, movie: Movie, movieFile: MovieFile) = withContext(Dispatchers.IO) {
         val statementMovie = connection.prepareStatement(UPDATE_MOVIE)
         statementMovie.setString(1, movie.title)
         statementMovie.setInt(2, movie.releaseYear)
@@ -214,8 +355,7 @@ class MovieRepository(private val connection: Connection) {
         statementMovieFile.executeUpdate()
     }
 
-    // Delete a movie
-    suspend fun delete(id: Int) = withContext(Dispatchers.IO) {
+    suspend fun deleteMovie(id: Int) = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(DELETE_MOVIE)
         statement.setInt(1, id)
         statement.executeUpdate()

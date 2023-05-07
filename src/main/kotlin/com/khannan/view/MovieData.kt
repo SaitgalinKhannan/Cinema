@@ -34,6 +34,16 @@ fun Application.movies() {
             }
         }
 
+        get("/movie/full/{id}") {
+            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+            try {
+                val movieFullInfo = movieController.movieFullInfoById(id)
+                call.respond(HttpStatusCode.OK, movieFullInfo)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
         // Read all movies
         get("/movie/all") {
             try {
