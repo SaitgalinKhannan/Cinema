@@ -6,7 +6,7 @@ import kotlinx.coroutines.withContext
 import java.sql.Connection
 import java.sql.Statement
 
-class MovieRepository(private val connection: Connection): MovieRepositoryInterface {
+class MovieRepository(private val connection: Connection) : MovieRepositoryInterface {
     companion object {
         private const val CREATE_TABLE_MOVIES =
             "CREATE TABLE IF NOT EXISTS Movie (movId INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY, movTitle VARCHAR(255) NOT NULL, movYear INTEGER NOT NULL, movTime INTEGER NOT NULL, movLang VARCHAR(255) NOT NULL, movRelCountry VARCHAR(255) NOT NULL)"
@@ -152,36 +152,32 @@ class MovieRepository(private val connection: Connection): MovieRepositoryInterf
             movieDirectors.add(director)
         }
 
-        if (movieDirectors.isNotEmpty()) {
-            return@withContext movieDirectors
-        } else {
-            throw Exception("Record not found: movieDirectors")
-        }
+        return@withContext movieDirectors
     }
 
-     override suspend fun movieCast(id: Int): List<Actor> = withContext(Dispatchers.IO) {
+    override suspend fun movieCast(id: Int): List<Actor> = withContext(Dispatchers.IO) {
         val movieCastStatement = connection.prepareStatement(SELECT_MOVIE_CAST_BY_ID)
         movieCastStatement.setInt(1, id)
         val movieCastResultSet = movieCastStatement.executeQuery()
+        var movieCast = mutableListOf<Actor>()
 
         if (movieCastResultSet.next()) {
-            val movieCast = mutableListOf<Actor>()
+            val cast = mutableListOf<Actor>()
             while (movieCastResultSet.next()) {
                 val actorId = movieCastResultSet.getInt("actid")
                 val firstName = movieCastResultSet.getString("actfirstname")
                 val lastName = movieCastResultSet.getString("actlastname")
                 val gender = movieCastResultSet.getString("actgender")
                 val actor = Actor(actorId, firstName, lastName, gender)
-                movieCast.add(actor)
+                cast.add(actor)
             }
-
-            return@withContext movieCast
-        } else {
-            throw Exception("Record not found: movieCast")
+            movieCast = cast
         }
+
+        return@withContext movieCast
     }
 
-     override suspend fun movieGenre(id: Int): List<Genre> = withContext(Dispatchers.IO) {
+    override suspend fun movieGenre(id: Int): List<Genre> = withContext(Dispatchers.IO) {
         val movieGenreStatement = connection.prepareStatement(SELECT_MOVIE_GENRE_BY_ID)
         movieGenreStatement.setInt(1, id)
         val movieGenreResultSet = movieGenreStatement.executeQuery()
@@ -194,11 +190,7 @@ class MovieRepository(private val connection: Connection): MovieRepositoryInterf
             movieGenres.add(genre)
         }
 
-        if (movieGenres.isNotEmpty()) {
-            return@withContext movieGenres
-        } else {
-            throw Exception("Record not found: movieGenre")
-        }
+        return@withContext movieGenres
     }
 
     override suspend fun create(movie: Movie, movieFile: MovieFile): Int = withContext(Dispatchers.IO) {
