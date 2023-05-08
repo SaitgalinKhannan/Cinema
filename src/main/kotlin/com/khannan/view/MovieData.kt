@@ -1,9 +1,10 @@
 package com.khannan.view
 
 import com.khannan.controller.MovieController
+import com.khannan.controller.MovieControllerInterface
 import com.khannan.model.FullMovie
 import com.khannan.repository.MovieRepository
-import com.khannan.repository.connectToPostgres
+import com.khannan.repository.connectToDataBase
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -12,8 +13,8 @@ import io.ktor.server.routing.*
 import java.sql.Connection
 
 fun Application.movies() {
-    val dbConnection: Connection = connectToPostgres(embedded = true)
-    val movieController = MovieController(MovieRepository(dbConnection))
+    val dbConnection: Connection = connectToDataBase(embedded = true)
+    val movieController: MovieControllerInterface = MovieController(MovieRepository(dbConnection))
 
     routing {
         // Create movie

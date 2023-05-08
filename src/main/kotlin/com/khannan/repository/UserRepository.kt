@@ -6,7 +6,7 @@ import kotlinx.coroutines.withContext
 import java.sql.Connection
 import java.sql.Statement
 
-class UserRepository(private val connection: Connection) {
+class UserRepository(private val connection: Connection) : UserRepositoryInterface {
     companion object {
         private const val CREATE_TABLE_USER =
             "CREATE TABLE IF NOT EXISTS CinemaUser (userId INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY, last_name VARCHAR(50), first_name VARCHAR(50), middle_name VARCHAR(50) NULL, email VARCHAR(100) UNIQUE, password VARCHAR(100))"
@@ -25,7 +25,7 @@ class UserRepository(private val connection: Connection) {
         }
     }
 
-    suspend fun registerUser(user: CinemaUser): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun registerUser(user: CinemaUser): Boolean = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(INSERT_USER, Statement.RETURN_GENERATED_KEYS)
         statement.setString(1, user.lastName)
         statement.setString(2, user.firstName)
@@ -42,7 +42,7 @@ class UserRepository(private val connection: Connection) {
         }
     }
 
-    suspend fun loginUser(email: String, password: String): Pair<Int, Boolean> = withContext(Dispatchers.IO) {
+    override suspend fun loginUser(email: String, password: String): Pair<Int, Boolean> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(LOGIN_USER, Statement.RETURN_GENERATED_KEYS)
         statement.setString(1, email)
         statement.setString(2, password)

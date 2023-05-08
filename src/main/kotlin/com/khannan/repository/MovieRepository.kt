@@ -6,7 +6,7 @@ import kotlinx.coroutines.withContext
 import java.sql.Connection
 import java.sql.Statement
 
-class MovieRepository(private val connection: Connection) {
+class MovieRepository(private val connection: Connection): MovieRepositoryInterface {
     companion object {
         private const val CREATE_TABLE_MOVIES =
             "CREATE TABLE IF NOT EXISTS Movie (movId INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY, movTitle VARCHAR(255) NOT NULL, movYear INTEGER NOT NULL, movTime INTEGER NOT NULL, movLang VARCHAR(255) NOT NULL, movRelCountry VARCHAR(255) NOT NULL)"
@@ -84,7 +84,7 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    suspend fun movieFullInfo(id: Int): MovieFullInfo = withContext(Dispatchers.IO) {
+    override suspend fun movieFullInfo(id: Int): MovieFullInfo = withContext(Dispatchers.IO) {
         try {
             val movie = movie(id)
             val movieFile = movieFile(id)
@@ -105,11 +105,11 @@ class MovieRepository(private val connection: Connection) {
             )
         } catch (e: Exception) {
             println(e.message)
-            throw Exception("Record not found")
+            throw Exception("Record not found: movieFullInfo")
         }
     }
 
-    private suspend fun movieRating(id: Int): Int = withContext(Dispatchers.IO) {
+    override suspend fun movieRating(id: Int): Int = withContext(Dispatchers.IO) {
         val movieRatingStatement = connection.prepareStatement(SELECT_MOVIE_RATING_BY_ID)
         movieRatingStatement.setInt(1, id)
         val movieRatingResultSet = movieRatingStatement.executeQuery()
@@ -121,7 +121,7 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    private suspend fun movieReviews(id: Int): List<Review> = withContext(Dispatchers.IO) {
+    override suspend fun movieReviews(id: Int): List<Review> = withContext(Dispatchers.IO) {
         val movieReviewsStatement = connection.prepareStatement(SELECT_MOVIE_REVIEWS_BY_ID)
         movieReviewsStatement.setInt(1, id)
         val movieReviewsResultSet = movieReviewsStatement.executeQuery()
@@ -135,14 +135,10 @@ class MovieRepository(private val connection: Connection) {
             movieReviews.add(review)
         }
 
-        if (movieReviews.isNotEmpty()) {
-            return@withContext movieReviews
-        } else {
-            throw Exception("Record not found")
-        }
+        return@withContext movieReviews
     }
 
-    private suspend fun movieDirectors(id: Int): List<Director> = withContext(Dispatchers.IO) {
+    override suspend fun movieDirectors(id: Int): List<Director> = withContext(Dispatchers.IO) {
         val movieDirectorsStatement = connection.prepareStatement(SELECT_MOVIE_DIRECTORS_BY_ID)
         movieDirectorsStatement.setInt(1, id)
         val movieDirectorsResultSet = movieDirectorsStatement.executeQuery()
@@ -159,11 +155,11 @@ class MovieRepository(private val connection: Connection) {
         if (movieDirectors.isNotEmpty()) {
             return@withContext movieDirectors
         } else {
-            throw Exception("Record not found")
+            throw Exception("Record not found: movieDirectors")
         }
     }
 
-    private suspend fun movieCast(id: Int): List<Actor> = withContext(Dispatchers.IO) {
+     override suspend fun movieCast(id: Int): List<Actor> = withContext(Dispatchers.IO) {
         val movieCastStatement = connection.prepareStatement(SELECT_MOVIE_CAST_BY_ID)
         movieCastStatement.setInt(1, id)
         val movieCastResultSet = movieCastStatement.executeQuery()
@@ -181,11 +177,11 @@ class MovieRepository(private val connection: Connection) {
 
             return@withContext movieCast
         } else {
-            throw Exception("Record not found")
+            throw Exception("Record not found: movieCast")
         }
     }
 
-    private suspend fun movieGenre(id: Int): List<Genre> = withContext(Dispatchers.IO) {
+     override suspend fun movieGenre(id: Int): List<Genre> = withContext(Dispatchers.IO) {
         val movieGenreStatement = connection.prepareStatement(SELECT_MOVIE_GENRE_BY_ID)
         movieGenreStatement.setInt(1, id)
         val movieGenreResultSet = movieGenreStatement.executeQuery()
@@ -201,11 +197,11 @@ class MovieRepository(private val connection: Connection) {
         if (movieGenres.isNotEmpty()) {
             return@withContext movieGenres
         } else {
-            throw Exception("Record not found")
+            throw Exception("Record not found: movieGenre")
         }
     }
 
-    suspend fun create(movie: Movie, movieFile: MovieFile): Int = withContext(Dispatchers.IO) {
+    override suspend fun create(movie: Movie, movieFile: MovieFile): Int = withContext(Dispatchers.IO) {
         val statementMovie = connection.prepareStatement(INSERT_MOVIE, Statement.RETURN_GENERATED_KEYS)
         statementMovie.setString(1, movie.title)
         statementMovie.setInt(2, movie.releaseYear)
@@ -229,7 +225,7 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    suspend fun movie(id: Int): Movie = withContext(Dispatchers.IO) {
+    override suspend fun movie(id: Int): Movie = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_MOVIE_BY_ID)
         statement.setInt(1, id)
         val resultSet = statement.executeQuery()
@@ -254,13 +250,13 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    suspend fun deleteMovieFile(id: Int): Int = withContext(Dispatchers.IO) {
+    override suspend fun deleteMovieFile(id: Int): Int = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(DELETE_MOVIEFILE)
         statement.setInt(1, id)
         statement.executeUpdate()
     }
 
-    suspend fun movieFile(id: Int): MovieFile = withContext(Dispatchers.IO) {
+    override suspend fun movieFile(id: Int): MovieFile = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_MOVIE_FILE_BY_ID)
         statement.setInt(1, id)
         val resultSet = statement.executeQuery()
@@ -279,7 +275,7 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    suspend fun allMovies(): List<Movie> = withContext(Dispatchers.IO) {
+    override suspend fun allMovies(): List<Movie> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_ALL_MOVIES)
         val resultSet = statement.executeQuery()
         val moviesList = mutableListOf<Movie>()
@@ -311,8 +307,7 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    @Suppress("Unused")
-    suspend fun allMoviesFiles(): List<MovieFile> = withContext(Dispatchers.IO) {
+    override suspend fun allMoviesFiles(): List<MovieFile> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_ALL_MOVIE_FILE)
         val resultSet = statement.executeQuery()
         val moviesList = mutableListOf<MovieFile>()
@@ -338,7 +333,7 @@ class MovieRepository(private val connection: Connection) {
         }
     }
 
-    suspend fun updateMovie(id: Int, movie: Movie, movieFile: MovieFile) = withContext(Dispatchers.IO) {
+    override suspend fun updateMovie(id: Int, movie: Movie, movieFile: MovieFile): Unit = withContext(Dispatchers.IO) {
         val statementMovie = connection.prepareStatement(UPDATE_MOVIE)
         statementMovie.setString(1, movie.title)
         statementMovie.setInt(2, movie.releaseYear)
@@ -355,7 +350,7 @@ class MovieRepository(private val connection: Connection) {
         statementMovieFile.executeUpdate()
     }
 
-    suspend fun deleteMovie(id: Int) = withContext(Dispatchers.IO) {
+    override suspend fun deleteMovie(id: Int): Unit = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(DELETE_MOVIE)
         statement.setInt(1, id)
         statement.executeUpdate()
