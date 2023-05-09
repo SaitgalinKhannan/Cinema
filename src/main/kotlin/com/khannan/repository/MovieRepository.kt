@@ -3,6 +3,7 @@ package com.khannan.repository
 import com.khannan.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.sql.Connection
 import java.sql.Statement
 
@@ -91,7 +92,10 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
     }
 
     override suspend fun searchMovieByTitle(title: String): List<Movie> = withContext(Dispatchers.IO) {
-        val statement = connection.prepareStatement(SELECT_MOVIES_BY_TITLE + " '%${title.substring(1, title.lastIndex - 2)}%'")
+        val statement = connection.prepareStatement(SELECT_MOVIES_BY_TITLE + " LOWER('%${title.trim()}%')")
+        //${title.substring(1, title.lastIndex - 2)}
+        val file = File("output.txt")
+        file.writeText(statement.toString())
         val resultSet = statement.executeQuery()
         val moviesList = mutableListOf<Movie>()
 

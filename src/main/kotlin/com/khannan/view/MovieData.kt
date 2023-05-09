@@ -10,6 +10,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import java.io.File
 import java.sql.Connection
 
 fun Application.movies() {
@@ -18,9 +19,10 @@ fun Application.movies() {
 
     routing {
         post("/movie/title") {
-            //val title = call.parameters["title"] ?: throw IllegalArgumentException("Invalid title")
             try {
                 val title = call.receive<String>()
+                val file = File("output1.txt")
+                file.writeText(title)
                 val movies = movieController.searchMovieByTitle(title)
                 call.respond(HttpStatusCode.OK, movies)
             } catch (e: Exception) {

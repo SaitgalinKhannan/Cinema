@@ -1,0 +1,1 @@
+SELECT movid, movtitle, movyear, movtime, movlang, movrelcountry FROM movie WHERE LOWER(movtitle) LIKE LOWER('%Армагеддон%')
