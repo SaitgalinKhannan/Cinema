@@ -1,11 +1,18 @@
 package com.khannan.controller
 
+import com.khannan.model.Actor
 import com.khannan.model.Movie
 import com.khannan.model.MovieFile
 import com.khannan.model.MovieFullInfo
 
 interface MovieControllerInterface {
     suspend fun movieFullInfoById(id: Int): MovieFullInfo
+
+    suspend fun movieCastById(id: Int): List<Actor>
+
+    suspend fun insertUserMovie(movId: Int, userId: Int)
+
+    suspend fun movieByUser(id: Int): List<Movie>
 
     suspend fun movieById(id: Int): Movie
 

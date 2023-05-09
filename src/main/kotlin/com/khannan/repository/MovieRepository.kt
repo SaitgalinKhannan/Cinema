@@ -41,23 +41,27 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
                     "JOIN genre ON moviegenre.genid = genre.genid " +
                     "WHERE moviegenre.movid = ?"
         private const val SELECT_MOVIE_CAST_BY_ID =
-            "SELECT actor.actid, actor.actfirstname, actor.actlastname, actor.actgender " +
-                    "FROM moviecast " +
-                    "JOIN actor ON moviecast.actid = actor.actid " +
+            "SELECT actor.actid, actfirstname, actlastname, role, actgender\n" +
+                    "FROM moviecast\n" +
+                    "JOIN actor ON moviecast.actid = actor.actid\n" +
                     "WHERE moviecast.movid = ?"
         private const val SELECT_MOVIE_DIRECTORS_BY_ID =
             "SELECT director.dirid, director.dirfirstname, director.dirlastname " +
                     "FROM moviedirection " +
                     "JOIN director ON moviedirection.dirid = director.dirid " +
                     "WHERE moviedirection.movid = ?"
+        private const val SELECT_USER_MOVIES =
+            "SELECT movie.movid, movie.movtitle, movie.movyear, movie.movtime, movie.movlang, movie.movrelcountry FROM movie INNER JOIN usermovie ON usermovie.movid = movie.movid WHERE usermovie.userid = ?"
         private const val SELECT_MOVIE_REVIEWS_BY_ID =
             "SELECT rv.revid, r.revname, rv.revstars FROM reviewer r JOIN review rv ON r.revid = rv.revid WHERE rv.movid = ?"
         private const val SELECT_MOVIE_RATING_BY_ID =
             "SELECT AVG(revstars) AS rating FROM review WHERE movid = ?"
         private const val INSERT_MOVIE =
             "INSERT INTO movie (movtitle, movyear, movtime, movlang, movrelcountry) VALUES (?, ?, ?, ?, ?)"
-        private const val INSERT_MOVIEFILE =
+        private const val INSERT_MOVIE_FILE =
             "INSERT INTO moviefile (movid, movpath, movpreviewpath) VALUES (?, ?, ?)"
+        private const val INSERT_USER_MOVIE =
+            "INSERT INTO usermovie (userid, movid) VALUES (?, ?)"
         private const val UPDATE_MOVIE =
             "UPDATE movie SET movtitle = ?, movyear = ?, movtime = ?, movlang = ?, movrelcountry = ? WHERE movid = ?"
         private const val UPDATE_MOVIEFILE =
@@ -107,6 +111,42 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             println(e.message)
             throw Exception("Record not found: movieFullInfo")
         }
+    }
+
+    override suspend fun insertUserMovie(movId: Int, userId: Int) {
+        val userMoviesStatement = connection.prepareStatement(INSERT_USER_MOVIE)
+        userMoviesStatement.setInt(1, userId)
+        userMoviesStatement.setInt(2, movId)
+        userMoviesStatement.executeQuery()
+    }
+
+    override suspend fun movieByUser(id: Int): List<Movie> = withContext(Dispatchers.IO) {
+        val userMoviesStatement = connection.prepareStatement(SELECT_USER_MOVIES)
+        userMoviesStatement.setInt(1, id)
+        val userMoviesResultSet = userMoviesStatement.executeQuery()
+        val moviesList = mutableListOf<Movie>()
+
+        while (userMoviesResultSet.next()) {
+            val movId = userMoviesResultSet.getInt("movid")
+            val movTitle = userMoviesResultSet.getString("movtitle")
+            val movYear = userMoviesResultSet.getInt("movyear")
+            val movTime = userMoviesResultSet.getInt("movtime")
+            val movLang = userMoviesResultSet.getString("movlang")
+            val movRelCountry = userMoviesResultSet.getString("movrelcountry")
+
+            moviesList.add(
+                Movie(
+                    movId,
+                    movTitle,
+                    movYear,
+                    movTime,
+                    movLang,
+                    movRelCountry
+                )
+            )
+        }
+
+        return@withContext moviesList
     }
 
     override suspend fun movieRating(id: Int): Int = withContext(Dispatchers.IO) {
@@ -167,8 +207,9 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
                 val actorId = movieCastResultSet.getInt("actid")
                 val firstName = movieCastResultSet.getString("actfirstname")
                 val lastName = movieCastResultSet.getString("actlastname")
+                val role = movieCastResultSet.getString("role")
                 val gender = movieCastResultSet.getString("actgender")
-                val actor = Actor(actorId, firstName, lastName, gender)
+                val actor = Actor(actorId, firstName, lastName, role, gender)
                 cast.add(actor)
             }
             movieCast = cast
@@ -202,7 +243,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         statementMovie.setString(5, movie.releaseCountry)
         statementMovie.executeUpdate()
 
-        val statementMovieFile = connection.prepareStatement(INSERT_MOVIEFILE)
+        val statementMovieFile = connection.prepareStatement(INSERT_MOVIE_FILE)
         statementMovieFile.setInt(1, movieFile.id)
         statementMovieFile.setString(2, movieFile.filePath)
         statementMovieFile.setString(3, movieFile.previewFilePath)
@@ -270,6 +311,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
     override suspend fun allMovies(): List<Movie> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_ALL_MOVIES)
         val resultSet = statement.executeQuery()
+
         val moviesList = mutableListOf<Movie>()
 
         while (resultSet.next()) {

@@ -17,14 +17,38 @@ fun Application.movies() {
     val movieController: MovieControllerInterface = MovieController(MovieRepository(dbConnection))
 
     routing {
-        // Create movie
         post("/movie") {
             val fullMovie = call.receive<FullMovie>()
             val id = movieController.createMovie(fullMovie.movie, fullMovie.movieFile)
             call.respond(HttpStatusCode.Created, id)
         }
 
-        // Read movie
+        post("/usermovie/insert") {
+            val userMovie = call.receive<Pair<Int, Int>>()
+            val id = movieController.insertUserMovie(userMovie.first, userMovie.second)
+            call.respond(HttpStatusCode.Created, id)
+        }
+
+        get("/movie/cast/{id}") {
+            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+            try {
+                val movie = movieController.movieCastById(id)
+                call.respond(HttpStatusCode.OK, movie)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
+        get("/movie/usermovie/{id}") {
+            val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+            try {
+                val movie = movieController.movieByUser(id)
+                call.respond(HttpStatusCode.OK, movie)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
         get("/movie/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             try {
@@ -45,7 +69,6 @@ fun Application.movies() {
             }
         }
 
-        // Read all movies
         get("/movie/all") {
             try {
                 val movies = movieController.allMovies()
@@ -55,7 +78,6 @@ fun Application.movies() {
             }
         }
 
-        // Update movie
         put("/movie/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             val fullMovie = call.receive<FullMovie>()
@@ -63,7 +85,6 @@ fun Application.movies() {
             call.respond(HttpStatusCode.OK)
         }
 
-        // Delete movie
         delete("/movie/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             movieController.deleteMovie(id)

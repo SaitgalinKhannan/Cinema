@@ -1,5 +1,6 @@
 package com.khannan.controller
 
+import com.khannan.model.Actor
 import com.khannan.model.Movie
 import com.khannan.model.MovieFile
 import com.khannan.model.MovieFullInfo
@@ -7,8 +8,22 @@ import com.khannan.repository.MovieRepositoryInterface
 
 class MovieController(private val movieRepository: MovieRepositoryInterface) : MovieControllerInterface {
 
+
+
     override suspend fun movieFullInfoById(id: Int): MovieFullInfo {
         return movieRepository.movieFullInfo(id)
+    }
+
+    override suspend fun movieCastById(id: Int): List<Actor> {
+        return movieRepository.movieCast(id)
+    }
+
+    override suspend fun insertUserMovie(movId: Int, userId: Int) {
+        return movieRepository.insertUserMovie(movId, userId)
+    }
+
+    override suspend fun movieByUser(id: Int): List<Movie> {
+        return movieRepository.movieByUser(id)
     }
 
     override suspend fun movieById(id: Int): Movie {

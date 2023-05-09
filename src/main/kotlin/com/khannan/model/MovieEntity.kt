@@ -18,6 +18,7 @@ data class Actor(
     val id: Int,
     val firstName: String,
     val lastName: String,
+    val role: String,
     val gender: String
 )
 
@@ -71,6 +72,7 @@ data class Review(
     val stars: Int,
 )
 
+@Suppress("Unused")
 @Serializable
 data class Reviewer(
     val id: Int,

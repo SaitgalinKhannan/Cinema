@@ -6,6 +6,10 @@ interface MovieRepositoryInterface {
 
     suspend fun movieFullInfo(id: Int): MovieFullInfo
 
+    suspend fun insertUserMovie(movId: Int, userId: Int)
+
+    suspend fun movieByUser(id: Int): List<Movie>
+
     suspend fun movieRating(id: Int): Int
 
     suspend fun movieReviews(id: Int): List<Review>
