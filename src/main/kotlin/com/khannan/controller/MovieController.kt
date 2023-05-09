@@ -9,7 +9,6 @@ import com.khannan.repository.MovieRepositoryInterface
 class MovieController(private val movieRepository: MovieRepositoryInterface) : MovieControllerInterface {
 
 
-
     override suspend fun movieFullInfoById(id: Int): MovieFullInfo {
         return movieRepository.movieFullInfo(id)
     }
@@ -18,8 +17,8 @@ class MovieController(private val movieRepository: MovieRepositoryInterface) : M
         return movieRepository.movieCast(id)
     }
 
-    override suspend fun insertUserMovie(movId: Int, userId: Int) {
-        return movieRepository.insertUserMovie(movId, userId)
+    override suspend fun insertUserMovie(userId: Int, movId: Int) {
+        movieRepository.insertUserMovie(userId, movId)
     }
 
     override suspend fun movieByUser(id: Int): List<Movie> {

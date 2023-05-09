@@ -23,10 +23,10 @@ fun Application.movies() {
             call.respond(HttpStatusCode.Created, id)
         }
 
-        post("/usermovie/insert") {
+        post("/movie/usermovie/insert") {
             val userMovie = call.receive<Pair<Int, Int>>()
-            val id = movieController.insertUserMovie(userMovie.first, userMovie.second)
-            call.respond(HttpStatusCode.Created, id)
+            movieController.insertUserMovie(userMovie.first, userMovie.second)
+            call.respond(HttpStatusCode.OK)
         }
 
         get("/movie/cast/{id}") {

@@ -113,11 +113,11 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         }
     }
 
-    override suspend fun insertUserMovie(movId: Int, userId: Int) {
+    override suspend fun insertUserMovie(userId: Int, movId: Int) {
         val userMoviesStatement = connection.prepareStatement(INSERT_USER_MOVIE)
         userMoviesStatement.setInt(1, userId)
         userMoviesStatement.setInt(2, movId)
-        userMoviesStatement.executeQuery()
+        userMoviesStatement.execute()
     }
 
     override suspend fun movieByUser(id: Int): List<Movie> = withContext(Dispatchers.IO) {
