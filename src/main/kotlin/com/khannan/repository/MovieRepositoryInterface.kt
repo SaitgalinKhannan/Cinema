@@ -3,6 +3,7 @@ package com.khannan.repository
 import com.khannan.model.*
 
 interface MovieRepositoryInterface {
+    suspend fun searchMovieByTitle(title: String): List<Movie>
     suspend fun movieFullInfo(id: Int): MovieFullInfo
     suspend fun insertUserMovie(userId: Int, movId: Int)
     suspend fun movieByUser(id: Int): List<Movie>

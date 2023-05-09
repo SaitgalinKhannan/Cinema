@@ -36,6 +36,8 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             "SELECT movid, movpath, movpreviewpath FROM moviefile ORDER BY movid"
         private const val SELECT_ALL_MOVIES =
             "SELECT movid, movtitle, movyear, movtime, movlang, movrelcountry FROM movie ORDER BY movid"
+        private const val SELECT_MOVIES_BY_TITLE =
+            "SELECT movid, movtitle, movyear, movtime, movlang, movrelcountry FROM movie WHERE LOWER(movtitle) LIKE"
         private const val SELECT_MOVIE_GENRE_BY_ID =
             "SELECT genre.genid, genre.gentitle FROM moviegenre " +
                     "JOIN genre ON moviegenre.genid = genre.genid " +
@@ -86,6 +88,34 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         } catch (e: Exception) {
             println(e.message)
         }
+    }
+
+    override suspend fun searchMovieByTitle(title: String): List<Movie> = withContext(Dispatchers.IO) {
+        val statement = connection.prepareStatement(SELECT_MOVIES_BY_TITLE + " '%${title.substring(1, title.lastIndex - 2)}%'")
+        val resultSet = statement.executeQuery()
+        val moviesList = mutableListOf<Movie>()
+
+        while (resultSet.next()) {
+            val movId = resultSet.getInt("movid")
+            val movTitle = resultSet.getString("movtitle")
+            val movYear = resultSet.getInt("movyear")
+            val movTime = resultSet.getInt("movtime")
+            val movLang = resultSet.getString("movlang")
+            val movRelCountry = resultSet.getString("movrelcountry")
+
+            moviesList.add(
+                Movie(
+                    movId,
+                    movTitle,
+                    movYear,
+                    movTime,
+                    movLang,
+                    movRelCountry
+                )
+            )
+        }
+
+        return@withContext moviesList
     }
 
     override suspend fun movieFullInfo(id: Int): MovieFullInfo = withContext(Dispatchers.IO) {

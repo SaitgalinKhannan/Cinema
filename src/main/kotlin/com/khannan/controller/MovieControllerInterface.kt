@@ -6,6 +6,7 @@ import com.khannan.model.MovieFile
 import com.khannan.model.MovieFullInfo
 
 interface MovieControllerInterface {
+    suspend fun searchMovieByTitle(title: String): List<Movie>
     suspend fun movieFullInfoById(id: Int): MovieFullInfo
     suspend fun movieCastById(id: Int): List<Actor>
     suspend fun insertUserMovie(userId: Int, movId: Int)

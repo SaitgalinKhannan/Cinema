@@ -7,7 +7,9 @@ import com.khannan.model.MovieFullInfo
 import com.khannan.repository.MovieRepositoryInterface
 
 class MovieController(private val movieRepository: MovieRepositoryInterface) : MovieControllerInterface {
-
+    override suspend fun searchMovieByTitle(title: String): List<Movie> {
+        return movieRepository.searchMovieByTitle(title)
+    }
 
     override suspend fun movieFullInfoById(id: Int): MovieFullInfo {
         return movieRepository.movieFullInfo(id)
