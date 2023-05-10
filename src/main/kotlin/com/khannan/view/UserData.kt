@@ -18,7 +18,6 @@ fun Application.cinemaUsers() {
     val userController: UserControllerInterface = UserController(UserRepository(dbConnection))
 
     routing {
-
         post("/register") {
             val user = call.receive<CinemaUser>()
             val result = userController.registerUser(user)

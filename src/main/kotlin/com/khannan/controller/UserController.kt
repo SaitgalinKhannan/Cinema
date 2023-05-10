@@ -5,7 +5,6 @@ import com.khannan.model.EmailPass
 import com.khannan.repository.UserRepositoryInterface
 
 class UserController(private val userRepository: UserRepositoryInterface): UserControllerInterface {
-
     override suspend fun registerUser(user: CinemaUser): Boolean {
         return userRepository.registerUser(user)
     }
