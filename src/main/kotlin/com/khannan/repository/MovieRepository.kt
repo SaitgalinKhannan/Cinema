@@ -65,6 +65,8 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             "INSERT INTO moviefile (movid, movpath, movpreviewpath) VALUES (?, ?, ?)"
         private const val INSERT_USER_MOVIE =
             "INSERT INTO usermovie (userid, movid) VALUES (?, ?)"
+        private const val DELETE_USER_MOVIE =
+            "DELETE FROM usermovie WHERE userid = ? AND movid = ?"
         private const val UPDATE_MOVIE =
             "UPDATE movie SET movtitle = ?, movyear = ?, movtime = ?, movlang = ?, movrelcountry = ? WHERE movid = ?"
         private const val UPDATE_MOVIEFILE =
@@ -149,6 +151,13 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
 
     override suspend fun insertUserMovie(userId: Int, movId: Int) {
         val userMoviesStatement = connection.prepareStatement(INSERT_USER_MOVIE)
+        userMoviesStatement.setInt(1, userId)
+        userMoviesStatement.setInt(2, movId)
+        userMoviesStatement.execute()
+    }
+
+    override suspend fun deleteUserMovie(userId: Int, movId: Int) {
+        val userMoviesStatement = connection.prepareStatement(DELETE_USER_MOVIE)
         userMoviesStatement.setInt(1, userId)
         userMoviesStatement.setInt(2, movId)
         userMoviesStatement.execute()

@@ -50,6 +50,16 @@ fun Application.movies() {
             }
         }
 
+        post("/movie/usermovie/delete") {
+            try {
+                val userMovie = call.receive<Pair<Int, Int>>()
+                movieController.deleteUserMovie(userMovie.first, userMovie.second)
+                call.respond(HttpStatusCode.OK)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest)
+            }
+        }
+
         get("/movie/cast/{id}") {
             val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
             try {

@@ -14,6 +14,8 @@ class UserRepository(private val connection: Connection) : UserRepositoryInterfa
             "INSERT INTO cinemauser (last_name, first_name, middle_name, email, password) VALUES (?, ?, ?, ?, ?)"
         private const val LOGIN_USER =
             "SELECT * FROM cinemauser WHERE email = ? AND password = ?"
+        private const val USER_DATA_BY_ID =
+            "SELECT * FROM CinemaUser WHERE userId = ?"
     }
 
     init {
@@ -52,6 +54,24 @@ class UserRepository(private val connection: Connection) : UserRepositoryInterfa
             return@withContext Pair<Int, Boolean>(resultSet.getInt("userid"), true)
         } else {
             throw Exception("Unable to retrieve the id of the newly inserted user")
+        }
+    }
+
+    override suspend fun userData(id: Int): CinemaUser = withContext(Dispatchers.IO) {
+        val statement = connection.prepareStatement(USER_DATA_BY_ID)
+        statement.setInt(1, id)
+        val result = statement.executeQuery()
+
+        val lastName = result.getString("last_name")
+        val firstName = result.getString("first_name")
+        val middleName = result.getString("middle_name")
+        val email = result.getString("email")
+        val password = result.getString("password")
+
+        if (result.next()) {
+            return@withContext CinemaUser(id, lastName, firstName, middleName, email, password)
+        } else {
+            throw Exception("User not foud")
         }
     }
 }

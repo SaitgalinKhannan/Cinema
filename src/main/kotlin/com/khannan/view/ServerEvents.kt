@@ -1,3 +1,4 @@
+/*
 package com.khannan.view
 
 import com.khannan.model.SseEvent
@@ -34,10 +35,12 @@ suspend fun ApplicationCall.respondSse(events: ReceiveChannel<SseEvent>) {
 @Suppress("Unused")
 @OptIn(ExperimentalCoroutinesApi::class, ObsoleteCoroutinesApi::class)
 fun Application.configureSSE() {
-    /**
+    */
+/**
      * We produce a [BroadcastChannel] from a suspending function
      * that send a [SseEvent] instance each second.
-     */
+     *//*
+
     val channel = produce { // this: ProducerScope<SseEvent> ->
         var n = 0
         while (true) {
@@ -47,16 +50,20 @@ fun Application.configureSSE() {
         }
     }.broadcast()
 
-    /**
+    */
+/**
      * We use the [Routing] plugin to declare [Route] that will be
      * executed per call
-     */
+     *//*
+
     routing {
-        /**
+        */
+/**
          * Route to be executed when the client perform a GET `/sse` request.
          * It will respond using the [respondSse] extension method defined in this same file
          * that uses the [BroadcastChannel] channel we created earlier to emit those events.
-         */
+         *//*
+
         get("/sse") {
             val events = channel.openSubscription()
             try {
@@ -65,14 +72,16 @@ fun Application.configureSSE() {
                 events.cancel()
             }
         }
-        /**
+        */
+/**
          * Route to be executed when the client perform a GET `/` request.
          * It will serve instead HTML file embedded directly in this string that
          * contains JavaScript code to connect to the `/sse` endpoint using
          * the EventSource JavaScript class ( https://html.spec.whatwg.org/multipage/comms.html#the-eventsource-interface ).
          * Normally you would serve HTML and JS files using the [static] method.
          * But for illustrative reasons we are embedding this here.
-         */
+         *//*
+
         get("/") {
             call.respondText(
                 """
@@ -111,4 +120,4 @@ fun Application.configureSSE() {
             )
         }
     }
-}
+}*/

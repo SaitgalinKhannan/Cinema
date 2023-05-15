@@ -23,6 +23,10 @@ class MovieController(private val movieRepository: MovieRepositoryInterface) : M
         movieRepository.insertUserMovie(userId, movId)
     }
 
+    override suspend fun deleteUserMovie(userId: Int, movId: Int) {
+        movieRepository.deleteUserMovie(userId, movId)
+    }
+
     override suspend fun movieByUser(id: Int): List<Movie> {
         return movieRepository.movieByUser(id)
     }
