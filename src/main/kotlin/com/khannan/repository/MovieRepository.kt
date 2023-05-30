@@ -30,7 +30,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         private const val CREATE_TABLE_MOVIE_FILE =
             "CREATE TABLE IF NOT EXISTS MovieFile (movId INTEGER NOT NULL, movPath VARCHAR(255) NOT NULL, movPreviewPath VARCHAR(255) NOT NULL, CONSTRAINT id_unique UNIQUE (movId), FOREIGN KEY (movId) REFERENCES Movie (movId))"
         private const val CREATE_TABLE_USER_MOVIE =
-            "CREATE TABLE usermovie (userid INTEGER, movid INTEGER, FOREIGN KEY (userid) REFERENCES cinemauser(userid), FOREIGN KEY (movid) REFERENCES movie(movid), PRIMARY KEY (userid, movid))"
+            "CREATE TABLE userMovie (userid INTEGER, movId INTEGER, FOREIGN KEY (userid) REFERENCES cinemauser(userid), FOREIGN KEY (movid) REFERENCES movie(movid), PRIMARY KEY (userid, movid))"
         private const val SELECT_MOVIE_BY_ID =
             "SELECT movtitle, movyear, movtime, movlang, movrelcountry FROM movie WHERE movid = ?"
         private const val SELECT_MOVIE_FILE_BY_ID =
