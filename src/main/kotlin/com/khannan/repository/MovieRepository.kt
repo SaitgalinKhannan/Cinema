@@ -12,7 +12,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         private const val CREATE_TABLE_MOVIES =
             "CREATE TABLE IF NOT EXISTS Movie (movId INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY, movTitle VARCHAR(255) NOT NULL, movYear INTEGER NOT NULL, movTime INTEGER NOT NULL, movLang VARCHAR(255) NOT NULL, movRelCountry VARCHAR(255) NOT NULL)"
         private const val CREATE_TABLE_ACTOR =
-            "CREATE TABLE IF NOT EXISTS Actor (actId INTEGER PRIMARY KEY, actFirstName VARCHAR(255) NOT NULL, actLastName VARCHAR(255) NOT NULL, actGender VARCHAR(10) NOT NULL)"
+            "CREATE TABLE IF NOT EXISTS Actor (actId INTEGER PRIMARY KEY generated always as identity, actFirstName VARCHAR(255) NOT NULL, actLastName VARCHAR(255) NOT NULL, actGender VARCHAR(10) NOT NULL)"
         private const val CREATE_TABLE_DIRECTOR =
             "CREATE TABLE IF NOT EXISTS Director (dirId INTEGER PRIMARY KEY, dirFirstName VARCHAR(255) NOT NULL, dirLastName VARCHAR(255) NOT NULL)"
         private const val CREATE_TABLE_GENRE =
@@ -29,6 +29,8 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             "CREATE TABLE IF NOT EXISTS Review (movId INTEGER NOT NULL, revId INTEGER NOT NULL, revStars INTEGER NOT NULL, PRIMARY KEY (movId, revId), FOREIGN KEY (movId) REFERENCES Movie(movId), FOREIGN KEY (revId) REFERENCES Reviewer(revId))"
         private const val CREATE_TABLE_MOVIE_FILE =
             "CREATE TABLE IF NOT EXISTS MovieFile (movId INTEGER NOT NULL, movPath VARCHAR(255) NOT NULL, movPreviewPath VARCHAR(255) NOT NULL, CONSTRAINT id_unique UNIQUE (movId), FOREIGN KEY (movId) REFERENCES Movie (movId))"
+        private const val CREATE_TABLE_USER_MOVIE =
+            "CREATE TABLE usermovie (userid INTEGER, movid INTEGER, FOREIGN KEY (userid) REFERENCES cinemauser(userid), FOREIGN KEY (movid) REFERENCES movie(movid), PRIMARY KEY (userid, movid))"
         private const val SELECT_MOVIE_BY_ID =
             "SELECT movtitle, movyear, movtime, movlang, movrelcountry FROM movie WHERE movid = ?"
         private const val SELECT_MOVIE_FILE_BY_ID =
@@ -88,6 +90,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             statement.executeUpdate(CREATE_TABLE_REVIEWER)
             statement.executeUpdate(CREATE_TABLE_REVIEW)
             statement.executeUpdate(CREATE_TABLE_MOVIE_FILE)
+            statement.executeUpdate(CREATE_TABLE_USER_MOVIE)
         } catch (e: Exception) {
             println(e.message)
         }
