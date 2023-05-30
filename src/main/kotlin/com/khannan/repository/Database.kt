@@ -8,7 +8,7 @@ fun Application.connectToDataBase(embedded: Boolean): Connection {
     Class.forName("org.postgresql.Driver")
 
     return if (embedded) {
-        DriverManager.getConnection("jdbc:postgresql://localhost:5432/movies", "postgres", "roza")
+        DriverManager.getConnection("jdbc:postgresql://localhost:5432/movies", "postgres", "Lisunsin1")
     } else {
         val url = environment.config.property("postgres.url").getString()
         val user = environment.config.property("postgres.user").getString()

@@ -12,9 +12,9 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         private const val CREATE_TABLE_MOVIES =
             "CREATE TABLE IF NOT EXISTS Movie (movId INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY, movTitle VARCHAR(255) NOT NULL, movYear INTEGER NOT NULL, movTime INTEGER NOT NULL, movLang VARCHAR(255) NOT NULL, movRelCountry VARCHAR(255) NOT NULL)"
         private const val CREATE_TABLE_ACTOR =
-            "CREATE TABLE IF NOT EXISTS Actor (actId INTEGER PRIMARY KEY, actFname VARCHAR(255) NOT NULL, catLname VARCHAR(255) NOT NULL, actGender VARCHAR(10) NOT NULL)"
+            "CREATE TABLE IF NOT EXISTS Actor (actId INTEGER PRIMARY KEY, actFirstName VARCHAR(255) NOT NULL, actLastName VARCHAR(255) NOT NULL, actGender VARCHAR(10) NOT NULL)"
         private const val CREATE_TABLE_DIRECTOR =
-            "CREATE TABLE IF NOT EXISTS Director (dirId INTEGER PRIMARY KEY, dirFname VARCHAR(255) NOT NULL, dirLname VARCHAR(255) NOT NULL)"
+            "CREATE TABLE IF NOT EXISTS Director (dirId INTEGER PRIMARY KEY, dirFirstName VARCHAR(255) NOT NULL, dirLastName VARCHAR(255) NOT NULL)"
         private const val CREATE_TABLE_GENRE =
             "CREATE TABLE IF NOT EXISTS Genre (genId INTEGER PRIMARY KEY, genTitle VARCHAR(255) NOT NULL)"
         private const val CREATE_TABLE_MOVIE_CAST =
@@ -27,7 +27,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             "CREATE TABLE IF NOT EXISTS Reviewer (revId INTEGER PRIMARY KEY, revName VARCHAR(255) NOT NULL)"
         private const val CREATE_TABLE_REVIEW =
             "CREATE TABLE IF NOT EXISTS Review (movId INTEGER NOT NULL, revId INTEGER NOT NULL, revStars INTEGER NOT NULL, PRIMARY KEY (movId, revId), FOREIGN KEY (movId) REFERENCES Movie(movId), FOREIGN KEY (revId) REFERENCES Reviewer(revId))"
-        private const val CREATE_TABLE_MOVIEFILE =
+        private const val CREATE_TABLE_MOVIE_FILE =
             "CREATE TABLE IF NOT EXISTS MovieFile (movId INTEGER NOT NULL, movPath VARCHAR(255) NOT NULL, movPreviewPath VARCHAR(255) NOT NULL, CONSTRAINT id_unique UNIQUE (movId), FOREIGN KEY (movId) REFERENCES Movie (movId))"
         private const val SELECT_MOVIE_BY_ID =
             "SELECT movtitle, movyear, movtime, movlang, movrelcountry FROM movie WHERE movid = ?"
@@ -38,7 +38,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         private const val SELECT_ALL_MOVIES =
             "SELECT movid, movtitle, movyear, movtime, movlang, movrelcountry FROM movie ORDER BY movid"
         private const val SELECT_MOVIES_BY_TITLE =
-            "SELECT movid, movtitle, movyear, movtime, movlang, movrelcountry FROM movie WHERE LOWER(movtitle) LIKE"
+            "SELECT movId, movTitle, movYear, movTime, movLang, movRelCountry FROM movie WHERE LOWER(movTitle) LIKE"
         private const val SELECT_MOVIE_GENRE_BY_ID =
             "SELECT genre.genid, genre.gentitle FROM moviegenre " +
                     "JOIN genre ON moviegenre.genid = genre.genid " +
@@ -69,9 +69,9 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             "DELETE FROM usermovie WHERE userid = ? AND movid = ?"
         private const val UPDATE_MOVIE =
             "UPDATE movie SET movtitle = ?, movyear = ?, movtime = ?, movlang = ?, movrelcountry = ? WHERE movid = ?"
-        private const val UPDATE_MOVIEFILE =
+        private const val UPDATE_MOVIE_FILE =
             "UPDATE moviefile SET movpath = ?, movpreviewpath = ? WHERE movid = ?"
-        private const val DELETE_MOVIEFILE = "DELETE FROM moviefile WHERE movid = ?"
+        private const val DELETE_MOVIE_FILE = "DELETE FROM moviefile WHERE movid = ?"
         private const val DELETE_MOVIE = "DELETE FROM movie WHERE movid = ?"
     }
 
@@ -87,7 +87,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
             statement.executeUpdate(CREATE_TABLE_MOVIE_GENRE)
             statement.executeUpdate(CREATE_TABLE_REVIEWER)
             statement.executeUpdate(CREATE_TABLE_REVIEW)
-            statement.executeUpdate(CREATE_TABLE_MOVIEFILE)
+            statement.executeUpdate(CREATE_TABLE_MOVIE_FILE)
         } catch (e: Exception) {
             println(e.message)
         }
@@ -102,12 +102,12 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val moviesList = mutableListOf<Movie>()
 
         while (resultSet.next()) {
-            val movId = resultSet.getInt("movid")
-            val movTitle = resultSet.getString("movtitle")
-            val movYear = resultSet.getInt("movyear")
-            val movTime = resultSet.getInt("movtime")
-            val movLang = resultSet.getString("movlang")
-            val movRelCountry = resultSet.getString("movrelcountry")
+            val movId = resultSet.getInt("movId")
+            val movTitle = resultSet.getString("movTitle")
+            val movYear = resultSet.getInt("movYear")
+            val movTime = resultSet.getInt("movTime")
+            val movLang = resultSet.getString("movLang")
+            val movRelCountry = resultSet.getString("movRelCountry")
 
             moviesList.add(
                 Movie(
@@ -170,12 +170,12 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val moviesList = mutableListOf<Movie>()
 
         while (userMoviesResultSet.next()) {
-            val movId = userMoviesResultSet.getInt("movid")
-            val movTitle = userMoviesResultSet.getString("movtitle")
-            val movYear = userMoviesResultSet.getInt("movyear")
-            val movTime = userMoviesResultSet.getInt("movtime")
-            val movLang = userMoviesResultSet.getString("movlang")
-            val movRelCountry = userMoviesResultSet.getString("movrelcountry")
+            val movId = userMoviesResultSet.getInt("movId")
+            val movTitle = userMoviesResultSet.getString("movTitle")
+            val movYear = userMoviesResultSet.getInt("movYear")
+            val movTime = userMoviesResultSet.getInt("movTime")
+            val movLang = userMoviesResultSet.getString("movLang")
+            val movRelCountry = userMoviesResultSet.getString("movRelCountry")
 
             moviesList.add(
                 Movie(
@@ -211,9 +211,9 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val movieReviews: MutableList<Review> = mutableListOf()
 
         while (movieReviewsResultSet.next()) {
-            val reviewId = movieReviewsResultSet.getInt("revid")
-            val reviewerName = movieReviewsResultSet.getString("revname")
-            val reviewStars = movieReviewsResultSet.getInt("revstars")
+            val reviewId = movieReviewsResultSet.getInt("revId")
+            val reviewerName = movieReviewsResultSet.getString("revName")
+            val reviewStars = movieReviewsResultSet.getInt("revStars")
             val review = Review(reviewId, reviewerName, reviewStars)
             movieReviews.add(review)
         }
@@ -228,9 +228,9 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val movieDirectors: MutableList<Director> = mutableListOf()
 
         while (movieDirectorsResultSet.next()) {
-            val directorId = movieDirectorsResultSet.getInt("dirid")
-            val firstName = movieDirectorsResultSet.getString("dirfirstname")
-            val lastName = movieDirectorsResultSet.getString("dirlastname")
+            val directorId = movieDirectorsResultSet.getInt("dirId")
+            val firstName = movieDirectorsResultSet.getString("dirFirstName")
+            val lastName = movieDirectorsResultSet.getString("dirLastName")
             val director = Director(directorId, firstName, lastName)
             movieDirectors.add(director)
         }
@@ -247,11 +247,11 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         if (movieCastResultSet.next()) {
             val cast = mutableListOf<Actor>()
             while (movieCastResultSet.next()) {
-                val actorId = movieCastResultSet.getInt("actid")
-                val firstName = movieCastResultSet.getString("actfirstname")
-                val lastName = movieCastResultSet.getString("actlastname")
+                val actorId = movieCastResultSet.getInt("actId")
+                val firstName = movieCastResultSet.getString("actFirstName")
+                val lastName = movieCastResultSet.getString("actLastName")
                 val role = movieCastResultSet.getString("role")
-                val gender = movieCastResultSet.getString("actgender")
+                val gender = movieCastResultSet.getString("actGender")
                 val actor = Actor(actorId, firstName, lastName, role, gender)
                 cast.add(actor)
             }
@@ -268,8 +268,8 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val movieGenres = mutableListOf<Genre>()
 
         while (movieGenreResultSet.next()) {
-            val genreId = movieGenreResultSet.getInt("genid")
-            val genreTitle = movieGenreResultSet.getString("gentitle")
+            val genreId = movieGenreResultSet.getInt("genId")
+            val genreTitle = movieGenreResultSet.getString("genTitle")
             val genre = Genre(genreId, genreTitle)
             movieGenres.add(genre)
         }
@@ -307,11 +307,11 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val resultSet = statement.executeQuery()
 
         if (resultSet.next()) {
-            val movTitle = resultSet.getString("movtitle")
-            val movYear = resultSet.getInt("movyear")
-            val movTime = resultSet.getInt("movtime")
-            val movLang = resultSet.getString("movlang")
-            val movRelCountry = resultSet.getString("movrelcountry")
+            val movTitle = resultSet.getString("movTitle")
+            val movYear = resultSet.getInt("movYear")
+            val movTime = resultSet.getInt("movTime")
+            val movLang = resultSet.getString("movLang")
+            val movRelCountry = resultSet.getString("movRelCountry")
 
             return@withContext Movie(
                 id,
@@ -327,7 +327,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
     }
 
     override suspend fun deleteMovieFile(id: Int): Int = withContext(Dispatchers.IO) {
-        val statement = connection.prepareStatement(DELETE_MOVIEFILE)
+        val statement = connection.prepareStatement(DELETE_MOVIE_FILE)
         statement.setInt(1, id)
         statement.executeUpdate()
     }
@@ -338,8 +338,8 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val resultSet = statement.executeQuery()
 
         if (resultSet.next()) {
-            val filePath = resultSet.getString("movpath")
-            val previewFilePath = resultSet.getString("movpreviewpath")
+            val filePath = resultSet.getString("movPath")
+            val previewFilePath = resultSet.getString("movPreviewPath")
 
             return@withContext MovieFile(
                 id,
@@ -358,12 +358,12 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val moviesList = mutableListOf<Movie>()
 
         while (resultSet.next()) {
-            val movId = resultSet.getInt("movid")
-            val movTitle = resultSet.getString("movtitle")
-            val movYear = resultSet.getInt("movyear")
-            val movTime = resultSet.getInt("movtime")
-            val movLang = resultSet.getString("movlang")
-            val movRelCountry = resultSet.getString("movrelcountry")
+            val movId = resultSet.getInt("movId")
+            val movTitle = resultSet.getString("movTitle")
+            val movYear = resultSet.getInt("movYear")
+            val movTime = resultSet.getInt("movTime")
+            val movLang = resultSet.getString("movLang")
+            val movRelCountry = resultSet.getString("movRelCountry")
 
             moviesList.add(
                 Movie(
@@ -390,9 +390,9 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         val moviesList = mutableListOf<MovieFile>()
 
         while (resultSet.next()) {
-            val movId = resultSet.getInt("movid")
-            val movPath = resultSet.getString("movpath")
-            val movPreviewPath = resultSet.getString("movpreviewpath")
+            val movId = resultSet.getInt("movId")
+            val movPath = resultSet.getString("movPath")
+            val movPreviewPath = resultSet.getString("movPreviewPath")
 
             moviesList.add(
                 MovieFile(
@@ -420,7 +420,7 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
         statementMovie.setInt(6, id)
         statementMovie.executeUpdate()
 
-        val statementMovieFile = connection.prepareStatement(UPDATE_MOVIEFILE)
+        val statementMovieFile = connection.prepareStatement(UPDATE_MOVIE_FILE)
         statementMovieFile.setString(1, movieFile.filePath)
         statementMovieFile.setString(2, movieFile.previewFilePath)
         statementMovieFile.setInt(3, id)

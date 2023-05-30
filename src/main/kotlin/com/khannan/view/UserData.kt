@@ -19,15 +19,43 @@ fun Application.cinemaUsers() {
 
     routing {
         post("/register") {
-            val user = call.receive<CinemaUser>()
-            val result = userController.registerUser(user)
-            call.respond(HttpStatusCode.Created, result)
+            try {
+                val user = call.receive<CinemaUser>()
+                val result = userController.registerUser(user)
+                call.respond(HttpStatusCode.Created, result)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
         }
 
         post("/login") {
-            val user = call.receive<EmailPass>()
-            val id = userController.loginUser(user)
-            call.respond(HttpStatusCode.OK, id)
+            try {
+                val user = call.receive<EmailPass>()
+                val id = userController.loginUser(user)
+                call.respond(HttpStatusCode.OK, id)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
+        post("/update") {
+            try {
+                val user = call.receive<CinemaUser>()
+                val result = userController.updateUserData(user)
+                call.respond(HttpStatusCode.OK, result)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
+        }
+
+        get("/user/{id}") {
+            try {
+                val id = call.parameters["id"]?.toInt() ?: throw IllegalArgumentException("Invalid ID")
+                val cinemaUser = userController.userData(id)
+                call.respond(HttpStatusCode.OK, cinemaUser)
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.NotFound)
+            }
         }
     }
 }
