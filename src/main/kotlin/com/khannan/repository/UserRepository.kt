@@ -4,7 +4,9 @@ import com.khannan.model.CinemaUser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.sql.Connection
+import java.sql.SQLException
 import java.sql.Statement
+
 
 class UserRepository(private val connection: Connection) : UserRepositoryInterface {
     companion object {
@@ -23,10 +25,11 @@ class UserRepository(private val connection: Connection) : UserRepositoryInterfa
     }
 
     init {
-        val statement = connection.createStatement()
         try {
-            statement.executeUpdate(CREATE_TABLE_USER)
-        } catch (e: Exception) {
+            connection.createStatement().use { statement ->
+                statement.executeUpdate(CREATE_TABLE_USER)
+            }
+        } catch (e: SQLException) {
             println(e.message)
         }
     }

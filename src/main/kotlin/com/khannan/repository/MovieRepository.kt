@@ -98,7 +98,6 @@ class MovieRepository(private val connection: Connection) : MovieRepositoryInter
 
     override suspend fun searchMovieByTitle(title: String): List<Movie> = withContext(Dispatchers.IO) {
         val statement = connection.prepareStatement(SELECT_MOVIES_BY_TITLE + " LOWER('%${title.trim()}%')")
-        //${title.substring(1, title.lastIndex - 2)}
         val file = File("output.txt")
         file.writeText(statement.toString())
         val resultSet = statement.executeQuery()
